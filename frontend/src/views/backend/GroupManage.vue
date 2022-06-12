@@ -72,7 +72,7 @@
                 </form>
                 <div class="grid grid-cols-3 gap-4 mt-20">
                     <div class="col-span-2">
-                        <button @click="submitForm" class="w-full px-4 py-2 mt-4 font-medium leading-5 text-white transition-colors duration-150 bg-green-600 border border-transparent rounded-lg text-md active:bg-green-600 hover:bg-green-700 focus:outline-none focus:shadow-outline-purple">
+                        <button @click="submitForm" id="btnSave" class="w-full px-4 py-2 mt-4 font-medium leading-5 text-white transition-colors duration-150 bg-green-600 border border-transparent rounded-lg text-md active:bg-green-600 hover:bg-green-700 focus:outline-none focus:shadow-outline-purple">
                             <i class="fas fa-save"></i> Save
                         </button>
                     </div>
@@ -110,7 +110,7 @@
                     <div v-if="v$.formEdit.group.$error" class="mt-2 text-sm text-red-500"> {{ v$.formEdit.group.$errors[0].$message }}</div>
                 </form>
 
-                <button @click="submitFormEdit(formEdit.id)" class="w-full mt-20 px-4 py-2 font-medium leading-5 text-white transition-colors duration-150 bg-green-600 border border-transparent rounded-lg text-md active:bg-green-600 hover:bg-green-700 focus:outline-none focus:shadow-outline-purple">
+                <button @click="submitFormEdit(formEdit.id)" id="btnEdit" class="w-full mt-20 px-4 py-2 font-medium leading-5 text-white transition-colors duration-150 bg-green-600 border border-transparent rounded-lg text-md active:bg-green-600 hover:bg-green-700 focus:outline-none focus:shadow-outline-purple">
                         Update
                 </button>
                
@@ -163,13 +163,14 @@ export default {
         },
         submitForm() 
         {
+            document.getElementById("btnSave").disabled = true
             this.v$.$validate() 
             if(!this.v$.formAdd.$error) { 
                 http.post('group', {
                     group_name: this.formAdd.group
                 }).then((res)=>{
                     console.log(res)
-
+                    document.getElementById("btnSave").disabled = false
                     this.closeModalAdd()
                     this.getGroup()
 
@@ -189,10 +190,13 @@ export default {
                         title: 'Successfully added new information'
                     })
                 }).catch(error => {
+                    document.getElementById("btnSave").disabled = false
                     console.log(error.response.data);
                     console.log(error.response.status);
                     console.log(error.response.headers);
                 });
+            }else{
+                document.getElementById("btnSave").disabled = false
             }
         },
 
@@ -217,6 +221,7 @@ export default {
         },
         submitFormEdit(id)
         {
+            document.getElementById("btnEdit").disabled = true
             this.v$.$validate()
             if(!this.v$.formEdit.$error)
             {
@@ -224,7 +229,6 @@ export default {
                     group_name: this.formEdit.group
                 }).then(response => {
                     console.log(response.data)
-                    
                     const Toast = this.$swal.mixin({
                         toast: true,
                         position: 'top-end',
@@ -241,6 +245,7 @@ export default {
                         icon: 'success',
                         title: 'update success...'
                     }).then(()=>{
+                        document.getElementById("btnEdit").disabled = false
                         this.getGroup()
                         this.closeModalEdit()
                     })
@@ -257,12 +262,13 @@ export default {
                         text: `Message: ${error}`,
                         showConfirmButton: true,
                     }).then(()=>{
+                        document.getElementById("btnEdit").disabled = false
                         this.closeModalEdit()
                         location.reload()
                     })
                 })
             }else{
-                alert('error')
+                document.getElementById("btnEdit").disabled = false
             }
         },
 

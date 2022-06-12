@@ -44,7 +44,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                 </svg>
                             </button>
-                            <button @click="onclickDelete(item._id, item.measurement_name)" class="px-4 py-2 mx-1 text-md font-medium leading-5 text-white transition-colors duration-150 bg-red-600 border border-transparent rounded-lg active:bg-purple-600 hover:bg-red-700 focus:outline-none focus:shadow-outline-purple">
+                            <button @click="onclickDelete(item._id, `${item.fromUnit[0].unit_name} &emsp; to &emsp; ${item.toUnit[0].unit_name}`)" class="px-4 py-2 mx-1 text-md font-medium leading-5 text-white transition-colors duration-150 bg-red-600 border border-transparent rounded-lg active:bg-purple-600 hover:bg-red-700 focus:outline-none focus:shadow-outline-purple">
                                 <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
@@ -90,7 +90,7 @@
                 </form>
                 <div class="grid grid-cols-3 gap-4 mt-20">
                     <div class="col-span-2">
-                        <button @click="submitForm" class="w-full px-4 py-2 mt-4 font-medium leading-5 text-white transition-colors duration-150 bg-green-600 border border-transparent rounded-lg text-md active:bg-green-600 hover:bg-green-700 focus:outline-none focus:shadow-outline-purple">
+                        <button @click="submitForm" id="btnSave" class="w-full px-4 py-2 mt-4 font-medium leading-5 text-white transition-colors duration-150 bg-green-600 border border-transparent rounded-lg text-md active:bg-green-600 hover:bg-green-700 focus:outline-none focus:shadow-outline-purple">
                             <i class="fas fa-save"></i> Save
                         </button>
                     </div>
@@ -130,7 +130,7 @@
 
                 </form>
 
-                <button @click="submitFormEdit(formEdit.id)" class="w-full mt-20 px-4 py-2 font-medium leading-5 text-white transition-colors duration-150 bg-green-600 border border-transparent rounded-lg text-md active:bg-green-600 hover:bg-green-700 focus:outline-none focus:shadow-outline-purple">
+                <button @click="submitFormEdit(formEdit.id)" id="btnEdit" class="w-full mt-20 px-4 py-2 font-medium leading-5 text-white transition-colors duration-150 bg-green-600 border border-transparent rounded-lg text-md active:bg-green-600 hover:bg-green-700 focus:outline-none focus:shadow-outline-purple">
                         Update
                 </button>
                
@@ -201,47 +201,54 @@ export default {
         },
         async submitForm() 
         {
-            const dupicate = await this.checkDuplicateData(this.formAdd.toUnitId)
+            document.getElementById("btnSave").disabled = true
             this.v$.$validate() 
-            if(!this.v$.formAdd.$error && !dupicate) { 
-                http.post('measurement', {
-                    fromUnitId: this.unitId,
-                    toUnitId: this.formAdd.toUnitId,
-                    group_id: this.groupId,
-                    value: this.formAdd.value
-                }).then((res)=>{
-                    console.log(res)
+            if(!this.v$.formAdd.$error) { 
+                const dupicate = await this.checkDuplicateData(this.formAdd.toUnitId)
+                if(!dupicate) {
+                    http.post('measurement', {
+                        fromUnitId: this.unitId,
+                        toUnitId: this.formAdd.toUnitId,
+                        group_id: this.groupId,
+                        value: this.formAdd.value
+                    }).then((res)=>{
+                        console.log(res)
+                        document.getElementById("btnSave").disabled = false
+                        this.closeModalAdd()
+                        this.getMeasurement()
 
-                    this.closeModalAdd()
-                    this.getMeasurement()
-
-                    const Toast = this.$swal.mixin({
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true,
-                        didOpen: (toast) => {
-                            toast.addEventListener('mouseenter', this.$swal.stopTimer)
-                            toast.addEventListener('mouseleave', this.$swal.resumeTimer)
-                        }
+                        const Toast = this.$swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            didOpen: (toast) => {
+                                toast.addEventListener('mouseenter', this.$swal.stopTimer)
+                                toast.addEventListener('mouseleave', this.$swal.resumeTimer)
+                            }
+                        })
+                        Toast.fire({
+                            icon: 'success',
+                            title: 'Successfully added new information'
+                        })
+                    }).catch(error => {
+                        document.getElementById("btnSave").disabled = false
+                        console.log(error.response.data);
+                        console.log(error.response.status);
+                        console.log(error.response.headers);
+                    });
+                }else{
+                    document.getElementById("btnSave").disabled = false
+                    this.$swal({
+                        position: 'center',
+                        icon: 'error',
+                        title: 'This unit conversion is ready to use.',
+                        showConfirmButton: true,
                     })
-                    Toast.fire({
-                        icon: 'success',
-                        title: 'Successfully added new information'
-                    })
-                }).catch(error => {
-                    console.log(error.response.data);
-                    console.log(error.response.status);
-                    console.log(error.response.headers);
-                });
+                }
             }else{
-                this.$swal({
-                    position: 'center',
-                    icon: 'error',
-                    title: 'This unit conversion is ready to use.',
-                    showConfirmButton: true,
-                })
+                document.getElementById("btnSave").disabled = false
             }
         },
 
@@ -267,6 +274,7 @@ export default {
         },
         submitFormEdit(id)
         {
+            document.getElementById("btnEdit").disabled = true
             this.v$.$validate() 
             if(!this.v$.formEdit.$error)
             {
@@ -277,7 +285,6 @@ export default {
                     value: this.formEdit.value
                 }).then(response => {
                     console.log(response.data)
-                    
                     const Toast = this.$swal.mixin({
                         toast: true,
                         position: 'top-end',
@@ -294,11 +301,13 @@ export default {
                         icon: 'success',
                         title: 'update success...'
                     }).then(()=>{
+                        document.getElementById("btnEdit").disabled = false
                         this.getMeasurement()
                         this.closeModalEdit()
                     })
 
                 }).catch(error => {
+                    document.getElementById("btnEdit").disabled = false
                     console.log(error.response.data)
                     console.log(error.response.status)
                     console.log(error.response.headers)
@@ -314,6 +323,8 @@ export default {
                         location.reload()
                     })
                 })
+            }else{
+                document.getElementById("btnEdit").disabled = false
             }
         },
 
