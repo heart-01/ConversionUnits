@@ -317,7 +317,7 @@ export default {
     },
 
     validations() {
-        return { 
+        return {
             formAdd: {
                 group: { 
                     required: helpers.withMessage('* Please enter a group name.', required)

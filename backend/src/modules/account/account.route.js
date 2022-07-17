@@ -6,7 +6,7 @@ import { userAuthentication, adminAuthentication } from "../../middlewares/authe
 
 const router = express.Router()
 
-router.post('/login', AccountController.login)
+router.post('/login', adminAuthentication, AccountController.login)
 router.post('/register', adminAuthentication, createAccountValidator, validator, AccountController.register)
 
 export default router
